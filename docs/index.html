@@ -87,6 +87,17 @@ table.heat { border-collapse: separate; border-spacing: 2px; font-size: 12px; fo
 table.heat th { font-weight: 600; color: var(--ink-muted); padding: 4px 8px; text-align: center; white-space: nowrap; }
 table.heat td { width: 84px; height: 34px; text-align: center; border-radius: 4px; white-space: nowrap; }
 .placeholder { color: var(--ink-muted); font-size: 14px; }
+.s-connectome { --c: #A25379; } .s-input_only { --c: #2a78d6; } .s-random { --c: #1baf7a; } .s-shuffle { --c: #eda100; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .s-connectome { --c: #c46d97; } :root:not([data-theme="light"]) .s-input_only { --c: #3987e5; } :root:not([data-theme="light"]) .s-random { --c: #199e70; } :root:not([data-theme="light"]) .s-shuffle { --c: #c98500; } }
+:root[data-theme="dark"] .s-connectome { --c: #c46d97; } :root[data-theme="dark"] .s-input_only { --c: #3987e5; } :root[data-theme="dark"] .s-random { --c: #199e70; } :root[data-theme="dark"] .s-shuffle { --c: #c98500; }
+.axis text { fill: var(--ink-muted); font-size: 11px; }
+.axis line, .axis path { stroke: var(--border); }
+.grid line { stroke: var(--border); stroke-width: 1; }
+.note { background: var(--bg); border-radius: 8px; padding: 12px 14px; font-size: 14px; margin: 12px 0; }
+.note b { color: var(--ink-title); }
+table.nums { border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; margin-top: 8px; }
+table.nums th, table.nums td { padding: 4px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+table.nums th:first-child, table.nums td:first-child { text-align: left; }
 ol.log { margin: 0; padding-left: 20px; }
 ol.log li { margin-bottom: 8px; }
 .tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--border); margin-right: 6px; }
@@ -115,8 +126,20 @@ footer a { color: var(--accent); }
     <div class="tablewrap"><table class="heat" id="heat"></table></div>
   </section>
 
-  <section class="card"><h2>② 자모 → 출력 반응</h2><p class="placeholder">단계 A 실행 후 표시됩니다.</p></section>
-  <section class="card"><h2>③ 성적표</h2><p class="placeholder">실제 초파리 / 랜덤 / 셔플 / 입력만 — 단계 A 실행 후 표시됩니다.</p></section>
+  <section class="card" id="p2">
+    <h2>② 자모 → 출력 반응</h2>
+    <p class="sub">행 = 자모 40개, 열 = MBON 97개. 각 열 안에서 가장 약한 반응 = 연한 색, 가장 강한 반응 = 진한 색 (노이즈 σ=0.5, 실제 커넥톰, 평균). 칸에 마우스를 올리면 값이 보입니다.</p>
+    <div class="tablewrap"><svg id="resp" role="img" aria-label="자모별 MBON 반응 격자"></svg></div>
+  </section>
+
+  <section class="card" id="p3">
+    <h2>③ 성적표 — 단계 A: 자모 40개 알아보기</h2>
+    <p class="sub">가로 = 입력 노이즈 세기(σ), 세로 = 처음 보는 샘플의 정답률. 점 = seed 5개 평균, 세로 막대 = 최솟값~최댓값. 점선 = 찍기(2.5%).</p>
+    <div class="legend" id="acc-legend" style="margin-bottom:8px;flex-wrap:wrap"></div>
+    <svg id="acc" viewBox="0 0 720 340" role="img" aria-label="노이즈에 따른 정답률 비교"></svg>
+    <div class="note" id="acc-note"></div>
+    <div class="tablewrap"><table class="nums" id="acc-table"></table></div>
+  </section>
   <section class="card"><h2>④ ㅎㅏㄴㄱㅡㄹ 재생</h2><p class="placeholder">단계 B 실행 후 표시됩니다.</p></section>
 
   <section class="card">
@@ -234,6 +257,69 @@ fetch("data/circuit.json").then(r => r.json()).then(d => {
     html += "</tr>";
   }
   document.getElementById("heat").innerHTML = html;
+});
+
+const SERIES = [
+  ["connectome", "실제 초파리 커넥톰"], ["input_only", "입력만 (회로 없음)"],
+  ["random", "랜덤 그래프"], ["shuffle", "셔플 그래프"],
+];
+fetch("data/stage_a.json").then(r => r.ok ? r.json() : null).then(a => {
+  if (!a) return;
+  // ② 반응 격자 — 열(MBON)마다 0~1로 정규화
+  const M = a["mbon_response_sigma0.5"];
+  const J = a.jamo, T = a.mbon_types, nj = J.length, nm = T.length;
+  const cw = 9, ch = 13, left = 28, top = 4;
+  const svg2 = document.getElementById("resp");
+  svg2.setAttribute("viewBox", `0 0 ${left + nm * cw + 4} ${top + nj * ch + 4}`);
+  svg2.style.minWidth = "720px";
+  const cs = getComputedStyle(document.documentElement), hex = v => cs.getPropertyValue(v).trim();
+  const mix = (p, q, t) => { const f = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const A = f(p), B = f(q); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",")})`; };
+  const ramp = t => t < .5 ? mix(hex("--heat-0"), hex("--heat-1"), t * 2) : mix(hex("--heat-1"), hex("--heat-2"), (t - .5) * 2);
+  const lo = [], hi = [];
+  for (let k = 0; k < nm; k++) { const col = M.map(r => r[k]); lo.push(Math.min(...col)); hi.push(Math.max(...col)); }
+  for (let j = 0; j < nj; j++) {
+    const t = el("text", { x: left - 6, y: top + j * ch + ch - 3, "text-anchor": "end", style: "fill:var(--ink);font-size:11px" }, svg2);
+    t.textContent = J[j];
+    for (let k = 0; k < nm; k++) {
+      const v = M[j][k], n = hi[k] > lo[k] ? (v - lo[k]) / (hi[k] - lo[k]) : 0;
+      const r = el("rect", { x: left + k * cw, y: top + j * ch, width: cw - 1, height: ch - 1, rx: 1.5, fill: ramp(n) }, svg2);
+      r.addEventListener("mousemove", ev => showTip(ev, `<b>${J[j]}</b> → ${T[k]}<br>반응 ${v.toFixed(4)}<br>이 MBON 안에서 상대값 ${(n * 100).toFixed(0)}%`));
+      r.addEventListener("mouseleave", hideTip);
+    }
+  }
+
+  // ③ 정답률 꺾은선
+  const svg = document.getElementById("acc");
+  const X0 = 52, X1 = 700, Y0 = 300, Y1 = 16, xs = a.noises;
+  const xp = i => X0 + (X1 - X0) * i / (xs.length - 1), yp = v => Y0 - (Y0 - Y1) * v;
+  const grid = el("g", { class: "grid" }, svg), axis = el("g", { class: "axis" }, svg);
+  [0, .25, .5, .75, 1].forEach(v => {
+    el("line", { x1: X0, x2: X1, y1: yp(v), y2: yp(v) }, grid);
+    el("text", { x: X0 - 8, y: yp(v) + 4, "text-anchor": "end" }, axis).textContent = `${v * 100}%`;
+  });
+  xs.forEach((s, i) => { el("text", { x: xp(i), y: Y0 + 20, "text-anchor": "middle" }, axis).textContent = `σ ${s}`; });
+  el("line", { x1: X0, x2: X1, y1: yp(a.chance), y2: yp(a.chance), style: "stroke:var(--ink-muted);stroke-dasharray:4 4" }, svg);
+  const stats = {};
+  SERIES.forEach(([key], si) => {
+    stats[key] = xs.map(s => { const v = a.accuracy[key][Number.isInteger(s) ? s.toFixed(1) : String(s)]; const m = v.reduce((p, q) => p + q, 0) / v.length; return { m, lo: Math.min(...v), hi: Math.max(...v) }; });
+    const g = el("g", { class: `s-${key}` }, svg), off = (si - 1.5) * 5;
+    el("path", { d: stats[key].map((p, i) => `${i ? "L" : "M"}${xp(i) + off},${yp(p.m)}`).join(""), style: "fill:none;stroke:var(--c);stroke-width:2" }, g);
+    stats[key].forEach((p, i) => {
+      el("line", { x1: xp(i) + off, x2: xp(i) + off, y1: yp(p.lo), y2: yp(p.hi), style: "stroke:var(--c);stroke-width:2;stroke-linecap:round" }, g);
+      el("circle", { cx: xp(i) + off, cy: yp(p.m), r: 4.5, style: "fill:var(--c);stroke:var(--card);stroke-width:2" }, g);
+      const hit = el("circle", { cx: xp(i) + off, cy: yp(p.m), r: 12, fill: "transparent", style: "cursor:pointer" }, g);
+      hit.addEventListener("mousemove", ev => showTip(ev, `<b>${SERIES[si][1]}</b><br>σ ${xs[i]} · 평균 ${(p.m * 100).toFixed(1)}%<br>범위 ${(p.lo * 100).toFixed(1)} ~ ${(p.hi * 100).toFixed(1)}%`));
+      hit.addEventListener("mouseleave", hideTip);
+    });
+  });
+  document.getElementById("acc-legend").innerHTML = SERIES.map(([k, n]) => `<span class="s-${k}"><i style="background:var(--c)"></i>${n}</span>`).join("");
+  document.getElementById("acc-table").innerHTML =
+    `<tr><th>노이즈</th>${SERIES.map(([, n]) => `<th>${n}</th>`).join("")}</tr>` +
+    xs.map((s, i) => `<tr><td>σ ${s}</td>${SERIES.map(([k]) => `<td>${(stats[k][i].m * 100).toFixed(1)}%</td>`).join("")}</tr>`).join("");
+  const wins = xs.filter((_, i) => stats.connectome[i].lo > Math.max(stats.random[i].hi, stats.shuffle[i].hi, stats.input_only[i].hi)).length;
+  document.getElementById("acc-note").innerHTML = wins
+    ? `<b>결과:</b> 노이즈 ${xs.length}단계 중 ${wins}단계에서 실제 커넥톰이 모든 비교군보다 확실히 높았습니다.`
+    : `<b>결과: 실제 커넥톰이 비교군을 이긴 구간은 없습니다.</b> 노이즈가 커질수록 "입력만"이 가장 높고, 회로를 거친 세 가지는 비슷하게 낮습니다. 이 과제(원형 패턴 + 무작위 노이즈)는 원래 직선 하나로 가장 잘 나뉘는 문제라서, 회로가 신호를 섞어도 더 나아질 여지가 없습니다. 그래서 단계 A는 파이프라인 점검으로만 쓰고, 초파리 회로의 기여는 앞뒤 자모를 함께 봐야 하는 단계 B에서 검증합니다.`;
 });
 
 fetch("data/progress.json").then(r => r.json()).then(items => {
