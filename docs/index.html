@@ -110,7 +110,7 @@ footer a { color: var(--accent); }
 <body>
 <main>
   <h1>초파리 한글 실험</h1>
-  <p class="lede">수컷 초파리 커넥톰(MaleCNS v1.0)의 후각–버섯체 회로에 한글 자모를 넣고, 출력 뉴런 활동만으로 자모와 글자 조합 규칙을 구분할 수 있는지 검증합니다. 회로 연결은 고정되어 있고, 학습하는 것은 회로 바깥에 붙인 선형 분류기입니다.</p>
+  <p class="lede">수컷 초파리 커넥톰(MaleCNS v1.0)의 후각–버섯체 회로에 한글 자모를 넣고, 출력 뉴런 활동만으로 자모와 글자 조합 규칙을 구분할 수 있는지 검증합니다. 회로 연결은 고정되어 있고, 학습하는 것은 회로 바깥에 붙인 선형 분류기입니다. <a href="story.html" style="color:var(--accent)">처음 보는 분은 스토리 페이지부터 →</a></p>
 
   <section class="card" id="p1">
     <h2>① 회로 지도</h2>
@@ -140,7 +140,13 @@ footer a { color: var(--accent); }
     <div class="note" id="acc-note"></div>
     <div class="tablewrap"><table class="nums" id="acc-table"></table></div>
   </section>
-  <section class="card"><h2>④ ㅎㅏㄴㄱㅡㄹ 재생</h2><p class="placeholder">단계 B 실행 후 표시됩니다.</p></section>
+  <section class="card" id="p4">
+    <h2>④ 단계 B0 · B · C — 순서대로 넣기</h2>
+    <p class="sub">seed 5개 평균. B0 = 정답률(찍기 2.5%), B·C = 균형 정답률(찍기 33% / 50%). 부호 적용 버전(v2). "시점 맞춤" = 결과를 본 뒤 설계한 추가 분석(회로마다 0~3 자모 늦게 읽기 허용, 학습 데이터로만 선택).
+      재생과 해설은 <a href="story.html" style="color:var(--accent)">스토리 페이지</a>에 있습니다.</p>
+    <div class="tablewrap"><table class="nums" id="b-table"></table></div>
+    <div class="note" id="b-note"></div>
+  </section>
 
   <section class="card">
     <h2>⑤ 진행 일지</h2>
@@ -320,6 +326,23 @@ fetch("data/stage_a.json").then(r => r.ok ? r.json() : null).then(a => {
   document.getElementById("acc-note").innerHTML = wins
     ? `<b>결과:</b> 노이즈 ${xs.length}단계 중 ${wins}단계에서 실제 커넥톰이 모든 비교군보다 확실히 높았습니다.`
     : `<b>결과: 실제 커넥톰이 비교군을 이긴 구간은 없습니다.</b> 노이즈가 커질수록 "입력만"이 가장 높고, 회로를 거친 세 가지는 비슷하게 낮습니다. 이 과제(원형 패턴 + 무작위 노이즈)는 원래 직선 하나로 가장 잘 나뉘는 문제라서, 회로가 신호를 섞어도 더 나아질 여지가 없습니다. 그래서 단계 A는 파이프라인 점검으로만 쓰고, 초파리 회로의 기여는 앞뒤 자모를 함께 봐야 하는 단계 B에서 검증합니다.`;
+});
+
+Promise.all(["stage_b", "stage_b_timing"].map(n => fetch(`data/${n}.json`).then(r => r.ok ? r.json() : null))).then(([B, T]) => {
+  if (!B) return;
+  const R = B.results.v2, C = [["connectome", "실제 커넥톰"], ["random", "랜덤"], ["shuffle", "셔플"], ["input_only", "입력만"], ["ideal_memory", "완벽한 기억"]];
+  const m = a => (a.reduce((p, q) => p + q, 0) / a.length * 100).toFixed(1) + "%";
+  const rows = [
+    ...B.ks.map(k => [`B0 · ${k ? k + "개 전" : "지금"} 자모`, c => R.B0[k][c]]),
+    ["B · 받침/첫소리 (처음 설계)", c => R.B[c]],
+    ...(T ? [["B · 받침/첫소리 (시점 맞춤)", c => T.results.B[c]]] : []),
+    ["C · ㄸㅃㅉ 받침 (처음 설계)", c => R.C[c]],
+    ...(T ? [["C · ㄸㅃㅉ 받침 (시점 맞춤)", c => T.results.C[c]]] : []),
+  ];
+  document.getElementById("b-table").innerHTML = `<tr><th>과제</th>${C.map(([, n]) => `<th>${n}</th>`).join("")}</tr>` +
+    rows.map(([name, f]) => { const vals = C.map(([c]) => f(c)); const best = Math.max(...vals.map(v => v.reduce((p, q) => p + q, 0) / v.length));
+      return `<tr><td>${name}</td>${vals.map(v => { const mv = v.reduce((p, q) => p + q, 0) / v.length; return `<td style="${mv === best ? "font-weight:700;color:var(--ink-title)" : ""}">${m(v)}</td>`; }).join("")}</tr>`; }).join("");
+  document.getElementById("b-note").innerHTML = `<b>요약:</b> 실제 커넥톰은 입력이 출력에 늦게 도착하지만(지금 ${m(R.B0[0].connectome)}) 오래 남습니다(5개 전 ${m(R.B0[5].connectome)} vs 랜덤 ${m(R.B0[5].random)}). 최우선 목표인 받침/첫소리 판정(B)과 받침 규칙(C)에서는 랜덤·셔플 회로보다 낮았습니다. 굵은 숫자 = 행마다 가장 높은 값.`;
 });
 
 fetch("data/progress.json").then(r => r.json()).then(items => {
