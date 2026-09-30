@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>초파리 뇌 속 한글</title>
+<meta name="description" content="수컷 초파리 냄새 회로 7,910개 뉴런의 실제 위치와 연결을 3D로 돌려 보고, 직접 넣은 한글 단어에 뇌가 어떻게 반응하는지, 통역사(점수표)가 어떻게 배우는지 체험합니다.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@900&family=Lekton:wght@400;700&family=Nanum+Pen+Script&family=Poppins:wght@500;600&display=swap">
+<style>
+/* Layout: 위 = 어두운 3D 무대(일부러 한 가지 톤), 아래 = 세 단계 조작판(단어 넣기 → 통역사 훈련 → 실험실). 좁으면 한 줄로 쌓임 */
+:root {
+  color-scheme: light;
+  --paper: #F5ECE9; --paper-2: #F7F2EC; --card: #FFFFFF;
+  --ink: #39343D; --ink-strong: #3D0022; --muted: #6B6570; --line: #DAD7DB;
+  --accent: #A25379; --c-blue: #2a78d6; --c-aqua: #1baf7a; --c-yellow: #eda100;
+  --stage: #140c10; --stage-ink: #f3e6ec; --stage-muted: #b9a9b1;
+  --f-display: "Noto Serif KR", "Apple SD Gothic Neo", serif;
+  --f-body: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --f-data: "Lekton", "Malgun Gothic", "Apple SD Gothic Neo", ui-monospace, monospace;
+  --f-hand: "Nanum Pen Script", "Malgun Gothic", cursive;
+  --f-ui: "Poppins", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #1d1418; --paper-2: #231a1e; --card: #2c2126;
+    --ink: #e5dce0; --ink-strong: #fbe9f1; --muted: #a99fa5; --line: #41353b;
+    --accent: #c46d97; --c-blue: #3987e5; --c-aqua: #199e70; --c-yellow: #c98500;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #1d1418; --paper-2: #231a1e; --card: #2c2126;
+  --ink: #e5dce0; --ink-strong: #fbe9f1; --muted: #a99fa5; --line: #41353b;
+  --accent: #c46d97; --c-blue: #3987e5; --c-aqua: #199e70; --c-yellow: #c98500;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.7 var(--f-body); word-break: keep-all; overflow-wrap: anywhere; }
+button, input { font: inherit; }
+:focus-visible { outline: 3px solid var(--c-blue); outline-offset: 2px; }
+
+/* 3D 무대 */
+.stage { position: relative; height: min(72vh, 760px); min-height: 420px; background: radial-gradient(ellipse at 50% 45%, #2a1620, var(--stage) 70%); overflow: hidden; }
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.hud { position: absolute; left: 0; right: 0; top: 0; padding: calc(env(safe-area-inset-top, 0px) + 18px) 16px 0; pointer-events: none; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.hud h1 { margin: 0; font: 900 clamp(26px, 4.6vw, 46px)/1.15 var(--f-display); color: var(--stage-ink); text-wrap: balance; }
+.hud p { margin: 6px 0 0; color: var(--stage-muted); font-size: 14px; max-width: 30em; }
+.hud .right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: auto; }
+.chipset { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; max-width: 380px; }
+.chip { font: 700 11px var(--f-data); letter-spacing: .04em; color: var(--stage-ink); background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: 3px 9px; display: inline-flex; gap: 6px; align-items: center; }
+.chip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.sbtn { font: 600 12px var(--f-ui); color: var(--stage-ink); background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.tag3d { position: absolute; pointer-events: none; font: 700 12px var(--f-data); color: var(--stage-ink); background: rgba(20,12,16,.7); border: 1px solid rgba(255,255,255,.18); border-radius: 6px; padding: 2px 7px; transform: translate(-50%, -140%); white-space: nowrap; transition: opacity .3s; }
+.ticker { position: absolute; left: 16px; bottom: 16px; display: flex; gap: 8px; align-items: center; pointer-events: none; }
+.ticker .now { font: 900 clamp(46px, 9vw, 84px)/1 var(--f-display); color: #fff; text-shadow: 0 0 24px rgba(196,109,151,.9); min-width: 1.1em; text-align: center; }
+.ticker .lab { font: 700 12px var(--f-data); color: var(--stage-muted); max-width: 12em; line-height: 1.4; }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--stage-ink); font: 700 14px var(--f-data); background: var(--stage); transition: opacity .6s; }
+@media (max-width: 640px) { .chipset { display: none; } .hud p { font-size: 13px; } }
+.hint { position: absolute; right: 16px; bottom: 16px; font: 22px var(--f-hand); color: #e9a9c6; pointer-events: none; }
+
+/* 조작판 */
+.dock { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 980px) { .dock { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.step { font: 700 12px var(--f-data); letter-spacing: .14em; color: var(--accent); text-transform: uppercase; }
+.panel h2 { margin: 0; font: 900 22px/1.3 var(--f-display); color: var(--ink-strong); }
+.panel p { margin: 0; font-size: 14px; }
+.small { font: 400 12px/1.5 var(--f-data); color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { font: 600 14px var(--f-ui); border: 0; border-radius: 999px; padding: 10px 18px; background: var(--accent); color: #fff; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.btn[disabled] { opacity: .45; cursor: default; }
+.word { font: 700 20px var(--f-body); padding: 9px 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink-strong); width: 9em; max-width: 100%; }
+.seg { display: inline-flex; border: 1.5px solid var(--line); border-radius: 999px; padding: 3px; gap: 3px; background: var(--paper); }
+.seg button { border: 0; background: transparent; color: var(--ink); padding: 6px 12px; border-radius: 999px; cursor: pointer; font: 600 13px var(--f-ui); }
+.seg button.on { background: var(--accent); color: #fff; }
+.tiles { display: flex; flex-wrap: wrap; gap: 5px; min-height: 52px; }
+.jt { display: grid; place-items: center; min-width: 40px; padding: 3px 5px 2px; border-radius: 9px; background: var(--paper); border: 1px solid var(--line); }
+.jt .j { font-size: 20px; line-height: 1.2; color: var(--ink-strong); }
+.jt .r { font: 700 10px var(--f-data); color: var(--muted); }
+.jt.cho { box-shadow: inset 0 -4px 0 var(--accent); }
+.jt.jung { box-shadow: inset 0 -4px 0 var(--c-blue); }
+.jt.jong { box-shadow: inset 0 -4px 0 var(--c-aqua); }
+.jt.bad { box-shadow: inset 0 -4px 0 var(--c-yellow); }
+.jt .x { color: var(--c-yellow); }
+.jt.cur { outline: 2px solid var(--accent); }
+.syl { font: 900 clamp(22px, 3vw, 30px)/1.35 var(--f-display); color: var(--ink-strong); min-height: 1.4em; }
+.syl .sep { color: var(--accent); font-weight: 400; padding: 0 .08em; }
+.syl.ok { opacity: .5; }
+.bubble { position: relative; background: var(--paper); border-radius: 14px; padding: 10px 14px; font-size: 14px; }
+.bubble b { color: var(--ink-strong); }
+.bubble::before { content: "통역사"; position: absolute; top: -10px; left: 12px; font: 700 10px var(--f-data); letter-spacing: .08em; background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 8px; }
+.big { font: 700 40px/1 var(--f-data); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+svg { display: block; width: 100%; height: auto; }
+table.board { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+table.board th, table.board td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+table.board td.n { text-align: right; font: 700 13px var(--f-data); color: var(--ink-strong); }
+table.board tr.me td { background: var(--paper); }
+footer { text-align: center; font: 400 12px/1.7 var(--f-data); color: var(--muted); padding: 0 16px 48px; }
+a { color: var(--accent); }
+.note { border-left: 3px solid var(--c-yellow); padding-left: 12px; font-size: 13px; color: var(--ink); }
+</style>
+</head>
+<body>
+
+<section class="stage" aria-label="초파리 냄새 회로 3D">
+  <canvas id="gl"></canvas>
+  <div class="hud">
+    <div>
+      <h1>초파리 뇌 속 한글</h1>
+      <p>점 하나가 뉴런 하나입니다. 7,910개가 배선도 속 <b style="color:#fff">실제 위치</b>에 있습니다. 끌어서 돌리고, 휠이나 두 손가락으로 확대해 보세요.</p>
+    </div>
+    <div class="right">
+      <div class="chipset" id="legend"></div>
+      <div class="row"><button class="sbtn" id="rot" type="button">자동 회전 끄기</button><button class="sbtn" id="edges" type="button">연결선 숨기기</button></div>
+    </div>
+  </div>
+  <div id="tags"></div>
+  <div class="ticker" aria-live="polite"><span class="now" id="now"></span><span class="lab" id="nowlab"></span></div>
+  <div class="hint" id="hint">↓ 아래에서 단어를 들려주세요</div>
+  <div class="loading" id="loading">배선도 불러오는 중… <span id="loadpct" style="margin-left:8px">0%</span></div>
+</section>
+
+<main class="dock">
+  <section class="panel" aria-labelledby="h1">
+    <div class="step">1 · 단어 들려주기</div>
+    <h2 id="h1">초파리에게 한글을 들려주세요</h2>
+    <p>자모마다 정해 둔 냄새 조합이 더듬이로 들어갑니다. 위 3D에서 신호가 퍼지는 모습을 보세요.</p>
+    <form class="row" id="form">
+      <input class="word" id="word" value="한글" maxlength="8" autocomplete="off" aria-label="한글 단어">
+      <button class="btn" id="go" type="submit" disabled>들려주기</button>
+    </form>
+    <div class="row small" id="examples"></div>
+    <div class="tiles" id="tiles"></div>
+    <div><div class="small">정답이라면</div><div class="syl ok" id="sylok"></div></div>
+    <div><div class="small">초파리 뇌 + 통역사의 판정</div><div class="syl" id="syl"></div></div>
+    <div class="bubble" id="bubble">아직 한 번도 공부하지 않았어요. 오른쪽에서 저를 훈련시켜 주세요.</div>
+  </section>
+
+  <section class="panel" aria-labelledby="h2">
+    <div class="step">2 · 통역사 훈련</div>
+    <h2 id="h2">통역사가 초파리 뇌를 읽는 법을 배웁니다</h2>
+    <p>초파리 뇌의 연결은 바뀌지 않습니다. 배우는 쪽은 출력 뉴런 97개의 반응을 보고 "방금 자모가 첫소리·모음·받침 중 무엇이었나"를 고르는 <b>통역사(점수표)</b>입니다.</p>
+    <div class="row"><button class="btn" id="train" type="button" disabled>훈련 시작</button><button class="btn ghost" id="reset" type="button" disabled>처음으로</button></div>
+    <div class="row" style="justify-content:space-between;align-items:flex-end">
+      <div><div class="small">공부한 예시</div><div class="big" id="nseen">0</div></div>
+      <div style="text-align:right"><div class="small">처음 보는 문제 정답률</div><div class="big" id="acc">–</div></div>
+    </div>
+    <svg id="curve" viewBox="0 0 400 210" role="img" aria-label="공부한 예시 수에 따른 정답률"></svg>
+    <div class="small">점선 = 찍기(33%) · 옅은 선 = 앞서 해 본 기록</div>
+  </section>
+
+  <section class="panel" aria-labelledby="h3">
+    <div class="step">3 · 실험실</div>
+    <h2 id="h3">조건을 바꿔서 겨뤄 보세요</h2>
+    <div><div class="small" style="margin-bottom:6px">회로</div><div class="seg" id="segC" role="group" aria-label="회로 선택"><button type="button" data-v="connectome" class="on">실제 초파리</button><button type="button" data-v="random">랜덤 회로</button></div></div>
+    <div><div class="small" style="margin-bottom:6px">자모 하나를 넣는 시간</div><div class="seg" id="segS" role="group" aria-label="넣는 시간"><button type="button" data-v="2" class="on">2스텝</button><button type="button" data-v="4">4스텝</button><button type="button" data-v="6">6스텝</button></div></div>
+    <p class="small">랜덤 회로 = 뉴런 수·연결 수·연결 세기는 같고 연결 상대만 무작위. 조건을 바꾸면 통역사는 처음부터 다시 배웁니다.</p>
+    <div><div class="small" style="margin-bottom:4px">기록판 (훈련을 끝까지 마친 기록)</div>
+      <table class="board"><thead><tr><th>회로</th><th>넣는 시간</th><th style="text-align:right">정답률</th></tr></thead><tbody id="board"><tr><td colspan="3" class="small">아직 기록이 없습니다</td></tr></tbody></table></div>
+    <p class="small"><b style="color:var(--ink-strong)">실험 결과 힌트:</b> 넣는 시간을 늘리면 실제 초파리도 좋아지지만 랜덤 회로도 함께 좋아집니다. 직접 기록판에서 확인해 보세요. (<a href="story.html#c10">사전 등록 실험 결과</a>)</p>
+    <div class="note">이 페이지는 브라우저에서 실제 모델을 돌리되 단순화했습니다(seed 1개, 통역사 규제값 λ=0.01 고정). 논문식 수치는 <a href="index.html">대시보드</a>와 <a href="story.html">스토리</a>를 보세요.</div>
+  </section>
+</main>
+<footer>데이터: <a href="https://male-cns.janelia.org/">Janelia MaleCNS v1.0</a> (CC-BY 4.0) · 뉴런 위치는 세포체 좌표, 더듬이 뉴런(ORN)만 그림용 배치 · <a href="story.html">스토리</a> · <a href="index.html">대시보드</a> · <a href="https://github.com/MANGOCURLY/fly-hangul">코드</a><br>교육용 체험입니다. 살아 있는 초파리가 한글을 배운다는 뜻이 아닙니다.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sleep = ms => new Promise(r => setTimeout(r, RM ? 20 : ms));
+const ROLE_KO = ["더듬이 ORN", "국소 ALLN", "투사 PN", "케년 KC", "억제 APL", "조절 DPM", "출력 MBON"];
+const ROLE_COL = ["#1baf7a", "#8f7fb8", "#3987e5", "#d9719f", "#eda100", "#b9a9b1", "#ffffff"];
+const ROLE_SIZE = [4.2, 6.5, 6.5, 3.6, 18, 14, 12];
+const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ", JUNG = "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ";
+const JONG = ["", "ㄱ", "ㄲ", "ㄱㅅ", "ㄴ", "ㄴㅈ", "ㄴㅎ", "ㄷ", "ㄹ", "ㄹㄱ", "ㄹㅁ", "ㄹㅂ", "ㄹㅅ", "ㄹㅌ", "ㄹㅍ", "ㄹㅎ", "ㅁ", "ㅂ", "ㅂㅅ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+const ROLE = ["모음", "첫소리", "받침"], RCLS = ["jung", "cho", "jong"];
+function decompose(w) { const o = []; for (const ch of w) { const s = ch.charCodeAt(0) - 0xAC00; if (s < 0 || s > 11171) continue; o.push([CHO[Math.floor(s / 588)], 1], [JUNG[Math.floor((s % 588) / 28)], 0]); for (const c of JONG[s % 28]) o.push([c, 2]); } return o; }
+function compose(g) { const [c, v, ...f] = g, ci = CHO.indexOf(c), vi = JUNG.indexOf(v), fi = JONG.indexOf(f.join("")); return g.length >= 2 && ci >= 0 && vi >= 0 && fi >= 0 ? String.fromCharCode(0xAC00 + ci * 588 + vi * 28 + fi) : g.join(""); }
+function groupSyl(items) { const gs = []; items.forEach(([j, r]) => { if (r === 1 || !gs.length) gs.push([j]); else gs[gs.length - 1].push(j); }); return gs.map(compose).join('<span class="sep">|</span>'); }
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function gauss(r) { let u = 0, v = 0; while (!u) u = r(); v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+
+/* ---------- 상태 ---------- */
+const st = { meta: null, W: {}, feats: null, circuit: "connectome", steps: 2, model: null, curveRuns: [], busy: false, word: "한글" };
+
+/* ---------- 불러오기 ---------- */
+async function fetchBuf(url, onp) {
+  const r = await fetch(url); const total = +r.headers.get("content-length") || 0;
+  if (!r.body || !total) return r.arrayBuffer();
+  const rd = r.body.getReader(), chunks = []; let got = 0;
+  for (;;) { const { done, value } = await rd.read(); if (done) break; chunks.push(value); got += value.length; onp(got / total); }
+  const out = new Uint8Array(got); let o = 0; chunks.forEach(c => { out.set(c, o); o += c.length; }); return out.buffer;
+}
+async function load() {
+  const prog = [0, 0, 0, 0]; const upd = (i, p) => { prog[i] = p; $("loadpct").textContent = Math.round(prog.reduce((a, b) => a + b) / 4 * 100) + "%"; };
+  const [meta, wc, wr, fb] = await Promise.all([
+    fetch("fly3d/meta.json").then(r => r.json()).then(m => (upd(0, 1), m)),
+    fetchBuf("fly3d/w_connectome.bin", p => upd(1, p)), fetchBuf("fly3d/w_random.bin", p => upd(2, p)), fetchBuf("fly3d/feats.bin", p => upd(3, p)),
+  ]);
+  st.meta = meta; st.feats = new Uint16Array(fb);
+  st.W.connectome = buildW(wc); st.W.random = buildW(wr);
+}
+function buildW(buf) {
+  const N = st.meta.N, indptr = new Int32Array(buf, 0, N + 1), E = indptr[N];
+  const pre = new Uint16Array(buf, 4 * (N + 1), E), w = new Uint16Array(buf, 4 * (N + 1) + 2 * E, E);
+  const val = new Float32Array(E), sign = st.meta.sign, g = st.meta.settings.gain;
+  for (let i = 0; i < N; i++) {
+    let s = 0; for (let e = indptr[i]; e < indptr[i + 1]; e++) { val[e] = w[e] * sign[pre[e]]; s += Math.abs(val[e]); }
+    if (s > 0) for (let e = indptr[i]; e < indptr[i + 1]; e++) val[e] = val[e] / s * g;
+  }
+  return { indptr, pre, val };
+}
+
+/* ---------- 시뮬레이션: 04_sequence.py와 같은 규칙 ---------- */
+function makeSim(circuit, seed = 1) {
+  const m = st.meta, N = m.N, W = st.W[circuit], leak = m.settings.leak, sigma = m.settings.sigma;
+  const G = m.glomeruli.length, rnd = mulberry(seed), orn = [];
+  m.orn_glom.forEach((g, i) => { if (g >= 0) orn.push([i, g]); });
+  let x = new Float32Array(N), nx = new Float32Array(N);
+  const drive = new Float32Array(N);
+  return {
+    setJamo(j) {   // 자모 j의 냄새 조합 + 노이즈를 사구체별로 넣는다
+      const u = new Float32Array(G); m.prototypes[j].forEach(g => u[g] = 1);
+      for (let g = 0; g < G; g++) u[g] = Math.max(0, u[g] + sigma * gauss(rnd));
+      drive.fill(0); orn.forEach(([i, g]) => drive[i] = u[g]);
+    },
+    step() {
+      for (let i = 0; i < N; i++) {
+        let a = drive[i]; for (let e = W.indptr[i]; e < W.indptr[i + 1]; e++) a += W.val[e] * x[W.pre[e]];
+        nx[i] = (1 - leak) * x[i] + leak * Math.tanh(a);
+      }
+      [x, nx] = [nx, x];
+      return x;
+    },
+    mbon() { return m.mbon.map(i => x[i]); },
+  };
+}
+
+/* ---------- 통역사(선형 분류기, 클래스 균형 ridge) ---------- */
+function featsFor(circuit, steps) {
+  const L = st.meta.feats_layout, ci = L.circuits.indexOf(circuit), si = L.steps.indexOf(steps), T = L.T, D = L.D;
+  const blk = ci * L.steps.length + si, off = blk * T * D, X = new Float32Array(T * D), lo = L.lo[blk], hi = L.hi[blk];
+  for (let t = 0; t < T; t++) for (let d = 0; d < D; d++) X[t * D + d] = lo[d] + st.feats[off + t * D + d] / 65535 * (hi[d] - lo[d]);
+  const roles = st.meta.train_roles, y = new Int8Array(T); for (let t = 1; t < T; t++) y[t] = roles[t - 1];
+  return { X, y, T, D };
+}
+function solve(A, B, n, k) {       // A: n×n, B: n×k (둘 다 덮어씀), 부분 피벗 가우스 소거
+  for (let c = 0; c < n; c++) {
+    let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r * n + c]) > Math.abs(A[p * n + c])) p = r;
+    if (p !== c) { for (let q = 0; q < n; q++) [A[c * n + q], A[p * n + q]] = [A[p * n + q], A[c * n + q]]; for (let q = 0; q < k; q++) [B[c * k + q], B[p * k + q]] = [B[p * k + q], B[c * k + q]]; }
+    const d = A[c * n + c];
+    for (let r = 0; r < n; r++) { if (r === c) continue; const f = A[r * n + c] / d; if (!f) continue; for (let q = c; q < n; q++) A[r * n + q] -= f * A[c * n + q]; for (let q = 0; q < k; q++) B[r * k + q] -= f * B[c * k + q]; }
+  }
+  for (let r = 0; r < n; r++) for (let q = 0; q < k; q++) B[r * k + q] /= A[r * n + r];
+  return B;
+}
+function fitRidge(F, idx, lam = 0.01) {
+  const { X, y, D } = F, n = D + 1, K = 3;
+  const mu = new Float64Array(D), sd = new Float64Array(D);
+  idx.forEach(t => { for (let d = 0; d < D; d++) mu[d] += X[t * D + d]; }); for (let d = 0; d < D; d++) mu[d] /= idx.length;
+  idx.forEach(t => { for (let d = 0; d < D; d++) sd[d] += (X[t * D + d] - mu[d]) ** 2; }); for (let d = 0; d < D; d++) sd[d] = Math.sqrt(sd[d] / idx.length) + 1e-6;
+  const cnt = [0, 0, 0]; idx.forEach(t => cnt[y[t]]++);
+  const A = new Float64Array(n * n), B = new Float64Array(n * K), z = new Float64Array(n);
+  idx.forEach(t => {
+    for (let d = 0; d < D; d++) z[d] = (X[t * D + d] - mu[d]) / sd[d]; z[D] = 1;
+    const w = 1 / Math.max(cnt[y[t]], 1);
+    for (let a = 0; a < n; a++) { const za = z[a] * w; if (!za) continue; for (let b = a; b < n; b++) A[a * n + b] += za * z[b]; B[a * K + y[t]] += za; }
+  });
+  for (let a = 0; a < n; a++) { for (let b = 0; b < a; b++) A[a * n + b] = A[b * n + a]; A[a * n + a] += lam; }
+  return { mu, sd, Wt: solve(A, B, n, K), D };
+}
+function predict(M, v) {
+  const D = M.D, s = [0, 0, 0];
+  for (let k = 0; k < 3; k++) { let a = M.Wt[D * 3 + k]; for (let d = 0; d < D; d++) a += (v[d] - M.mu[d]) / M.sd[d] * M.Wt[d * 3 + k]; s[k] = a; }
+  const mx = Math.max(...s), e = s.map(q => Math.exp((q - mx) * 1.5)), z = e.reduce((p, q) => p + q);
+  return { k: s.indexOf(mx), p: e.map(q => q / z) };
+}
+function balAcc(M, F, idx) {
+  const hit = [0, 0, 0], n = [0, 0, 0], D = F.D;
+  idx.forEach(t => { const v = F.X.subarray(t * D, t * D + D); const k = predict(M, v).k; n[F.y[t]]++; if (k === F.y[t]) hit[F.y[t]]++; });
+  const acc = [0, 1, 2].filter(c => n[c]).map(c => hit[c] / n[c]); return acc.reduce((p, q) => p + q) / acc.length;
+}
+
+/* ---------- 3D ---------- */
+let renderer, scene, camera, controls, points, lines, actAttr, centroids = [];
+function init3d() {
+  const m = st.meta, cv = $("gl");
+  renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(40, 1, 0.01, 50);
+  camera.position.set(0, -0.02, 2.4);
+  controls = new THREE.OrbitControls(camera, cv);
+  controls.target.set(0, -0.12, 0); controls.enableDamping = true; controls.autoRotate = !RM; controls.autoRotateSpeed = 0.7; controls.minDistance = 0.8; controls.maxDistance = 6;
+  const N = m.N, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), size = new Float32Array(N);
+  const sums = m.role_order.map(() => [0, 0, 0, 0]);
+  for (let i = 0; i < N; i++) {
+    const [x, y, z] = m.pos[i], r = m.role[i];
+    pos.set([x, -y, -z], i * 3);
+    const c = new THREE.Color(ROLE_COL[r]); col.set([c.r, c.g, c.b], i * 3);
+    size[i] = ROLE_SIZE[r];
+    sums[r][0] += x; sums[r][1] += -y; sums[r][2] += -z; sums[r][3]++;
+  }
+  centroids = sums.map(s => new THREE.Vector3(s[0] / s[3], s[1] / s[3], s[2] / s[3]));
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  g.setAttribute("size", new THREE.BufferAttribute(size, 1));
+  actAttr = new THREE.BufferAttribute(new Float32Array(N), 1); g.setAttribute("act", actAttr);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { dpr: { value: renderer.getPixelRatio() } },
+    vertexShader: `attribute float size; attribute float act; attribute vec3 color; varying vec3 vC; varying float vA;
+      uniform float dpr;
+      void main(){ vC = color; vA = act; vec4 mv = modelViewMatrix * vec4(position,1.0);
+        gl_PointSize = size * dpr * (1.0 + act * 2.2) * (2.6 / -mv.z); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `varying vec3 vC; varying float vA;
+      void main(){ vec2 p = gl_PointCoord - 0.5; float d = length(p); if (d > 0.5) discard;
+        float core = smoothstep(0.5, 0.0, d); vec3 c = mix(vC * 0.55, vec3(1.0, 0.93, 0.97), vA * 0.85);
+        gl_FragColor = vec4(c * (0.8 + vA * 1.6), core * (0.6 + vA * 0.4)); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  points = new THREE.Points(g, mat); scene.add(points);
+  let nA = 0; const E = m.edges_show.filter(([a, b]) => (m.role[a] === 4 || m.role[b] === 4 || m.role[a] === 5 || m.role[b] === 5) ? nA++ < 40 : true), lp = new Float32Array(E.length * 6), lc = new Float32Array(E.length * 6);
+  E.forEach(([a, b], k) => {
+    lp.set([pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2], pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2]], k * 6);
+    const ca = new THREE.Color(ROLE_COL[m.role[a]]), cb = new THREE.Color(ROLE_COL[m.role[b]]);
+    lc.set([ca.r, ca.g, ca.b, cb.r, cb.g, cb.b], k * 6);
+  });
+  const lg = new THREE.BufferGeometry(); lg.setAttribute("position", new THREE.BufferAttribute(lp, 3)); lg.setAttribute("color", new THREE.BufferAttribute(lc, 3));
+  lines = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.045, blending: THREE.AdditiveBlending, depthWrite: false }));
+  scene.add(lines);
+  // 영역 이름표
+  const TAGS = [[0, "더듬이 (그림용 위치)"], [2, "촉각엽 · 투사 뉴런"], [3, "버섯체 · 케년 세포 4,064"], [6, "출력 뉴런 97 · 여기를 읽음"]];
+  $("tags").innerHTML = TAGS.map(([r, t]) => `<div class="tag3d" data-r="${r}">${t}</div>`).join("");
+  $("legend").innerHTML = ROLE_KO.map((t, r) => `<span class="chip"><i style="background:${ROLE_COL[r]}"></i>${t}</span>`).join("");
+  addEventListener("resize", resize); resize();
+  renderer.setAnimationLoop(tick);
+}
+function resize() {
+  const r = $("gl").getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
+  // 세로로 좁은 화면에서는 뒤로 물러나 뇌 전체가 들어오게
+  const d = 2.4 / Math.min(1, camera.aspect * 1.1), v = camera.position.clone().sub(controls.target);
+  camera.position.copy(controls.target).add(v.setLength(d));
+}
+const act = { cur: null, target: null };
+function tick() {
+  controls.update();
+  if (act.target) { const a = actAttr.array; for (let i = 0; i < a.length; i++) a[i] += (act.target[i] - a[i]) * 0.25; actAttr.needsUpdate = true; }
+  renderer.render(scene, camera);
+  const r = $("gl").getBoundingClientRect();
+  document.querySelectorAll(".tag3d").forEach(el => {
+    const v = centroids[+el.dataset.r].clone().project(camera);
+    el.style.left = ((v.x + 1) / 2 * r.width) + "px"; el.style.top = ((1 - v.y) / 2 * r.height) + "px";
+    el.style.opacity = v.z < 1 ? 1 : 0;
+  });
+}
+function setActivity(frame) {
+  const m = st.meta, N = m.N, t = new Float32Array(N), mx = new Float32Array(7);
+  for (let i = 0; i < N; i++) { const v = Math.abs(frame[i]); if (v > mx[m.role[i]]) mx[m.role[i]] = v; }
+  for (let i = 0; i < N; i++) { const r = m.role[i]; t[i] = mx[r] > 0 ? Math.pow(Math.abs(frame[i]) / mx[r], 1.6) : 0; }
+  act.target = t;
+}
+function calm() { act.target = new Float32Array(st.meta.N); }
+
+/* ---------- 1. 단어 들려주기 ---------- */
+let lastSim = null;
+function roleLabel(p) { return ROLE[p.k] + ` (${Math.round(p.p[p.k] * 100)}%)`; }
+function renderPred(items, preds, upto = Infinity) {
+  const tiles = $("tiles"); tiles.innerHTML = "";
+  let ok = 0, n = 0; const judged = [];
+  items.forEach(([j, r], i) => {
+    const t = document.createElement("span"); t.className = "jt";
+    const p = preds && i + 1 < items.length && i + 1 <= upto ? preds[i + 1] : null;
+    if (p) { const good = p.k === r; ok += good; n++; t.className = "jt " + (good ? RCLS[p.k] : "bad"); t.innerHTML = `<span class="j">${j}</span><span class="r">${good ? "" : '<span class="x">✕</span>'}${ROLE[p.k]}</span>`; t.title = `정답: ${ROLE[r]} · 확신 ${Math.round(p.p[p.k] * 100)}%`; judged.push([j, p.k]); }
+    else t.innerHTML = `<span class="j">${j}</span><span class="r">${i + 1 >= items.length ? "다음 자모 필요" : "…"}</span>`;
+    tiles.appendChild(t);
+  });
+  $("syl").innerHTML = judged.length ? groupSyl(judged) : "";
+  return { ok, n };
+}
+function explain(items, preds) {
+  if (!st.model) { $("bubble").innerHTML = "아직 한 번도 공부하지 않았어요. 오른쪽에서 저를 <b>훈련</b>시켜 주세요."; return; }
+  const { ok, n } = renderPred(items, preds);
+  const conf = preds.slice(1).map(p => p.p[p.k]); const avg = conf.length ? conf.reduce((a, b) => a + b) / conf.length : 0;
+  const mood = ok / Math.max(n, 1) >= 0.8 ? "꽤 잘 읽히네요!" : ok / Math.max(n, 1) >= 0.5 ? "반쯤은 알겠어요." : "솔직히 거의 모르겠어요.";
+  $("bubble").innerHTML = `"${st.word}"에서 판정할 수 있는 자모 ${n}개 중 <b>${ok}개</b>를 맞혔어요. 평균 확신 ${Math.round(avg * 100)}%. ${mood}` + (st.circuit === "random" ? " (지금은 랜덤 회로를 읽는 중)" : "");
+}
+async function hear(word) {
+  if (st.busy) return; st.busy = true; $("go").disabled = true; $("hint").style.opacity = 0;
+  st.word = word;
+  const items = decompose(word);
+  if (!items.length) { $("bubble").textContent = "한글 글자를 넣어 주세요 (예: 사랑, 떡볶이)."; st.busy = false; $("go").disabled = false; return; }
+  $("sylok").innerHTML = [...word].filter(c => /[가-힣]/.test(c)).join('<span class="sep">|</span>');
+  const ids = items.map(([j]) => st.meta.jamo.indexOf(j));
+  const sim = makeSim(st.circuit, 7), mbonStates = [], preds = [];
+  lastSim = { items, sim: { mbonStates } };
+  renderPred(items, null);
+  for (let i = 0; i < items.length; i++) {
+    $("now").textContent = items[i][0];
+    $("nowlab").textContent = `${i + 1}/${items.length} · 더듬이 → 촉각엽 → 버섯체 → 출력`;
+    document.querySelectorAll("#tiles .jt").forEach((t, k) => t.classList.toggle("cur", k === i));
+    sim.setJamo(ids[i]);
+    for (let s = 0; s < st.steps; s++) { setActivity(sim.step()); await sleep(220); }
+    mbonStates.push(sim.mbon());
+    if (st.model) { preds.push(predict(st.model, mbonStates[i])); renderPred(items, preds, i); }
+    document.querySelectorAll("#tiles .jt").forEach((t, k) => t.classList.toggle("cur", k === i));
+  }
+  const predsOut = st.model ? preds : null;
+  await sleep(500); $("now").textContent = ""; $("nowlab").textContent = ""; calm();
+  document.querySelectorAll("#tiles .jt").forEach(t => t.classList.remove("cur"));
+  explain(items, predsOut || []);
+  if (!st.model) renderPred(items, null);
+  st.busy = false; $("go").disabled = false;
+}
+function repredict() { if (!lastSim) return; const preds = st.model ? lastSim.sim.mbonStates.map(v => predict(st.model, v)) : null; if (preds) explain(lastSim.items, preds); else { renderPred(lastSim.items, null); explain(lastSim.items, []); } }
+
+/* ---------- 2. 통역사 훈련 ---------- */
+const NS = "http://www.w3.org/2000/svg";
+const el = (t, a, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); p && p.appendChild(e); return e; };
+const X0 = 40, X1 = 390, Y0 = 180, Y1 = 14, NMAX = 2080;
+const xp = n => X0 + (X1 - X0) * Math.log(n / 10) / Math.log(NMAX / 10), yp = v => Y0 - (Y0 - Y1) * v;
+function drawAxes() {
+  const s = $("curve"); s.innerHTML = "";
+  [0, .25, .5, .75, 1].forEach(v => { el("line", { x1: X0, x2: X1, y1: yp(v), y2: yp(v), stroke: "var(--line)" }, s); el("text", { x: X0 - 6, y: yp(v) + 4, "text-anchor": "end", style: "font:400 10px var(--f-data);fill:var(--muted)" }, s).textContent = v * 100 + "%"; });
+  [10, 100, 1000, 2080].forEach(n => el("text", { x: xp(n), y: Y0 + 18, "text-anchor": "middle", style: "font:400 10px var(--f-data);fill:var(--muted)" }, s).textContent = n.toLocaleString("ko-KR"));
+  el("line", { x1: X0, x2: X1, y1: yp(1 / 3), y2: yp(1 / 3), stroke: "var(--muted)", "stroke-dasharray": "2 4" }, s);
+  st.curveRuns.forEach(r => { el("path", { d: r.pts.map((p, i) => `${i ? "L" : "M"}${xp(p[0])},${yp(p[1])}`).join(""), fill: "none", stroke: r.circuit === "random" ? "var(--c-aqua)" : "var(--accent)", "stroke-width": 1.5, opacity: .3 }, s); });
+  return s;
+}
+async function train() {
+  if (st.busy) return; st.busy = true; ["train", "reset", "go"].forEach(i => $(i).disabled = true);
+  const F = featsFor(st.circuit, st.steps), T = F.T, cut = Math.floor(T * st.meta.settings.train_split), w0 = st.meta.settings.warmup;
+  const test = []; for (let t = cut; t < T; t++) test.push(t);
+  const s = drawAxes(), pts = [], col = st.circuit === "random" ? "var(--c-aqua)" : "var(--accent)";
+  const path = el("path", { fill: "none", stroke: col, "stroke-width": 3, "stroke-linejoin": "round" }, s);
+  const dot = el("circle", { r: 5, fill: col, stroke: "var(--card)", "stroke-width": 2 }, s);
+  const ns = [10, 20, 35, 60, 100, 160, 250, 400, 600, 900, 1300, 1700, NMAX];
+  for (const n of ns) {
+    const idx = []; for (let t = w0; t < w0 + n && t < cut; t++) idx.push(t);
+    st.model = fitRidge(F, idx, 0.01);
+    const a = balAcc(st.model, F, test); pts.push([n, a]);
+    path.setAttribute("d", pts.map((p, i) => `${i ? "L" : "M"}${xp(p[0])},${yp(p[1])}`).join(""));
+    dot.setAttribute("cx", xp(n)); dot.setAttribute("cy", yp(a));
+    $("nseen").textContent = n.toLocaleString("ko-KR"); $("acc").textContent = (a * 100).toFixed(1) + "%";
+    repredict();
+    await sleep(380);
+  }
+  st.curveRuns.push({ circuit: st.circuit, steps: st.steps, pts, final: pts[pts.length - 1][1] });
+  renderBoard();
+  st.busy = false; ["train", "reset", "go"].forEach(i => $(i).disabled = false);
+}
+function resetModel() { st.model = null; $("nseen").textContent = "0"; $("acc").textContent = "–"; drawAxes(); repredict(); }
+function renderBoard() {
+  const rows = [...st.curveRuns].sort((a, b) => b.final - a.final);
+  $("board").innerHTML = rows.map(r => `<tr class="${r === st.curveRuns[st.curveRuns.length - 1] ? "me" : ""}"><td>${r.circuit === "random" ? "랜덤 회로" : "실제 초파리"}</td><td>${r.steps}스텝</td><td class="n">${(r.final * 100).toFixed(1)}%</td></tr>`).join("");
+}
+
+/* ---------- 3. 실험실 ---------- */
+function seg(id, key, cast) {
+  $(id).addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b || st.busy) return;
+    $(id).querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+    st[key] = cast(b.dataset.v); resetModel();
+    $("bubble").innerHTML = `조건이 바뀌었어요(${st.circuit === "random" ? "랜덤 회로" : "실제 초파리"} · ${st.steps}스텝). 다시 <b>훈련</b>시키고 단어를 들려주세요.`;
+    lastSim = null; $("tiles").innerHTML = ""; $("syl").innerHTML = "";
+  });
+}
+
+/* ---------- 시작 ---------- */
+["한글", "초파리", "사랑해", "떡볶이", "닭"].forEach(w => { const b = document.createElement("button"); b.type = "button"; b.className = "btn ghost"; b.style.padding = "4px 12px"; b.textContent = w; b.onclick = () => { $("word").value = w; hear(w); }; $("examples").appendChild(b); });
+$("form").addEventListener("submit", e => { e.preventDefault(); hear($("word").value.trim()); });
+$("train").onclick = train; $("reset").onclick = resetModel;
+$("rot").onclick = () => { controls.autoRotate = !controls.autoRotate; $("rot").textContent = controls.autoRotate ? "자동 회전 끄기" : "자동 회전 켜기"; };
+$("edges").onclick = () => { lines.visible = !lines.visible; $("edges").textContent = lines.visible ? "연결선 숨기기" : "연결선 보이기"; };
+seg("segC", "circuit", String); seg("segS", "steps", Number);
+drawAxes();
+load().then(() => {
+  init3d(); calm();
+  $("loading").style.opacity = 0; setTimeout(() => $("loading").remove(), 700);
+  ["go", "train", "reset"].forEach(i => $(i).disabled = false);
+}).catch(err => { $("loading").textContent = "불러오기에 실패했습니다: " + err.message; });
+</script>
+</body>
+</html>

@@ -110,7 +110,7 @@ footer a { color: var(--accent); }
 <body>
 <main>
   <h1>초파리 한글 실험</h1>
-  <p class="lede">수컷 초파리 커넥톰(MaleCNS v1.0)의 후각–버섯체 회로에 한글 자모를 넣고, 출력 뉴런 활동만으로 자모와 글자 조합 규칙을 구분할 수 있는지 검증합니다. 회로 연결은 고정되어 있고, 학습하는 것은 회로 바깥에 붙인 선형 분류기입니다. <a href="story.html" style="color:var(--accent)">처음 보는 분은 스토리 페이지부터 →</a></p>
+  <p class="lede">수컷 초파리 커넥톰(MaleCNS v1.0)의 후각–버섯체 회로에 한글 자모를 넣고, 출력 뉴런 활동만으로 자모와 글자 조합 규칙을 구분할 수 있는지 검증합니다. 회로 연결은 고정되어 있고, 학습하는 것은 회로 바깥에 붙인 선형 분류기입니다. <a href="story.html" style="color:var(--accent)">처음 보는 분은 스토리 페이지부터 →</a> · <a href="fly3d.html" style="color:var(--accent)">3D 체험 →</a></p>
 
   <section class="card" id="p1">
     <h2>① 회로 지도</h2>
@@ -146,6 +146,13 @@ footer a { color: var(--accent); }
       재생과 해설은 <a href="story.html" style="color:var(--accent)">스토리 페이지</a>에 있습니다.</p>
     <div class="tablewrap"><table class="nums" id="b-table"></table></div>
     <div class="note" id="b-note"></div>
+  </section>
+
+  <section class="card" id="p6">
+    <h2>⑥ 추가 실험 (사전 등록)</h2>
+    <p class="sub">실행 전에 <a href="https://github.com/MANGOCURLY/fly-hangul/blob/main/docs/data/followup_plan.json" style="color:var(--accent)">가설과 성공기준</a>을 커밋(2026-09-30 23:34)한 뒤 돌렸습니다. v2, seed 5개 평균, 균형 정답률. 굵은 숫자 = 행마다 가장 높은 값.</p>
+    <div class="tablewrap"><table class="nums" id="f-table"></table></div>
+    <div class="note" id="f-note"></div>
   </section>
 
   <section class="card">
@@ -343,6 +350,20 @@ Promise.all(["stage_b", "stage_b_timing"].map(n => fetch(`data/${n}.json`).then(
     rows.map(([name, f]) => { const vals = C.map(([c]) => f(c)); const best = Math.max(...vals.map(v => v.reduce((p, q) => p + q, 0) / v.length));
       return `<tr><td>${name}</td>${vals.map(v => { const mv = v.reduce((p, q) => p + q, 0) / v.length; return `<td style="${mv === best ? "font-weight:700;color:var(--ink-title)" : ""}">${m(v)}</td>`; }).join("")}</tr>`; }).join("");
   document.getElementById("b-note").innerHTML = `<b>요약:</b> 실제 커넥톰은 입력이 출력에 늦게 도착하지만(지금 ${m(R.B0[0].connectome)}) 오래 남습니다(5개 전 ${m(R.B0[5].connectome)} vs 랜덤 ${m(R.B0[5].random)}). 최우선 목표인 받침/첫소리 판정(B)과 받침 규칙(C)에서는 랜덤·셔플 회로보다 낮았습니다. 굵은 숫자 = 행마다 가장 높은 값.`;
+});
+
+Promise.all(["followup", "stage_b"].map(n => fetch(`data/${n}.json`).then(r => r.ok ? r.json() : null))).then(([F, B]) => {
+  if (!F || !B) return;
+  const C = [["connectome", "실제 커넥톰"], ["random", "랜덤"], ["shuffle", "셔플"], ["input_only", "입력만"], ["ideal_memory", "완벽한 기억"]];
+  const avg = a => a.reduce((p, q) => p + q, 0) / a.length;
+  const rows = [];
+  Object.keys(F.E3_steps).sort((a, b) => a - b).forEach(st => { rows.push([`B · ${st}스텝`, F.E3_steps[st].B]); rows.push([`C · ${st}스텝`, F.E3_steps[st].C]); });
+  rows.push(["B · 데이터 3,000", B.results.v2.B], ["B · 데이터 12,000", F.E1_data["12000"].B], ["C · 데이터 3,000", B.results.v2.C], ["C · 데이터 12,000", F.E1_data["12000"].C]);
+  document.getElementById("f-table").innerHTML = `<tr><th>조건</th>${C.map(([, n]) => `<th>${n}</th>`).join("")}<th>seed별 승리(실제 vs 랜덤/셔플)</th></tr>` +
+    rows.map(([name, r]) => { const best = Math.max(...C.map(([c]) => avg(r[c])));
+      const wr = r.connectome.filter((v, i) => v > r.random[i]).length, ws = r.connectome.filter((v, i) => v > r.shuffle[i]).length;
+      return `<tr><td>${name}</td>${C.map(([c]) => `<td style="${avg(r[c]) === best ? "font-weight:700;color:var(--ink-title)" : ""}">${(avg(r[c]) * 100).toFixed(1)}%</td>`).join("")}<td>${wr}/5 · ${ws}/5</td></tr>`; }).join("");
+  document.getElementById("f-note").innerHTML = "<b>판정:</b> E3(넣는 시간) 성공기준 미충족. 스텝을 늘리면 실제 커넥톰이 오르지만(B 37→51→58%) 랜덤도 함께 오름. 6스텝 받침 규칙(C)에서만 평균으로 앞섬(87.5 vs 83.5 / 77.3%, seed 4/5). 대가로 3개 전 기억은 43%→4%. E1(데이터 4배) 예측 틀림: 실제 커넥톰 +4.9%p(B), +7.6%p(C)로 ±3%p를 넘었지만 순위는 그대로.";
 });
 
 fetch("data/progress.json").then(r => r.json()).then(items => {

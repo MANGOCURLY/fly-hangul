@@ -157,7 +157,7 @@ a { color: var(--accent); }
 <div class="chapbar">
   <nav id="nav" aria-label="장 이동">
     <a href="#top">표지</a><a href="#c1">01 무대</a><a href="#c2">02 입력</a><a href="#c3">03 울림</a><a href="#c4">04 학습</a>
-    <a href="#c5">05 자모</a><a href="#c6">06 메아리</a><a href="#c7">07 한|글</a><a href="#c8">08 받침 규칙</a><a href="#c9">09 결론</a>
+    <a href="#c5">05 자모</a><a href="#c6">06 메아리</a><a href="#c7">07 한|글</a><a href="#c8">08 받침 규칙</a><a href="#c10">09 더 오래?</a><a href="#c9">10 결론</a><a href="fly3d.html">3D 체험 →</a>
   </nav>
   <div class="fill" id="fill"></div>
 </div>
@@ -350,9 +350,36 @@ a { color: var(--accent); }
   </div>
 </section>
 
-<section class="ch alt" id="c9">
+<section class="ch alt" id="c10">
   <div class="inner">
-    <div class="label">09 · 결론</div>
+    <div class="col reveal">
+      <div class="label">09 · 추가 실험 · 사전 등록</div>
+      <h2>더 오래, 더 많이 시키면 달라질까?</h2>
+      <p>"느리지만 오래 남는다"면, 자모를 더 오래 넣거나 더 많이 보여 주면 결과가 바뀔까요? 이번에는 <b>실험을 돌리기 전에</b> 가설과 성공기준을 적어서 공개 저장소에 먼저 올렸습니다. 좋은 결과만 골라내지 않았다는 증거입니다.</p>
+      <p class="fig-cap" id="plan-cap"></p>
+    </div>
+    <div class="two" style="margin-top:20px;align-items:start">
+      <figure class="fig reveal" style="margin:0">
+        <h3>① 자모 하나를 넣는 시간: 2 · 4 · 6스텝</h3>
+        <p class="fig-cap" style="margin:0 0 8px">신호가 출력까지 가는 데 3단계가 걸립니다. 더 오래 넣으면 지금 자모가 도착한 뒤에 읽게 됩니다.</p>
+        <div class="legend" id="e3-legend"></div>
+        <svg id="e3-B" viewBox="0 0 460 250" role="img" aria-label="넣는 시간에 따른 받침/첫소리 판정 정답률"></svg>
+        <svg id="e3-C" viewBox="0 0 460 250" role="img" aria-label="넣는 시간에 따른 받침 규칙 정답률" style="margin-top:10px"></svg>
+        <div class="note" id="e3-note"></div>
+      </figure>
+      <figure class="fig reveal" style="margin:0">
+        <h3>② 학습 데이터 4배: 자모 3,000개 → 12,000개</h3>
+        <p class="fig-cap" style="margin:0 0 8px">점 두 개를 잇는 선: 왼쪽 = 3,000개, 오른쪽 = 12,000개 (받침/첫소리 판정)</p>
+        <svg id="e1" viewBox="0 0 460 250" role="img" aria-label="학습 데이터를 늘렸을 때 정답률 변화"></svg>
+        <div class="note" id="e1-note"></div>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="c9">
+  <div class="inner">
+    <div class="label">10 · 결론</div>
     <h2>그래서, 초파리가 한글을 배웠을까요?</h2>
     <div class="verdict" id="final"></div><p class="col" id="final-sub" style="font-size:18px;margin-top:-12px"></p>
     <div class="two" style="align-items:start">
@@ -368,7 +395,7 @@ a { color: var(--accent); }
         </ul>
       </div>
     </div>
-    <p style="margin-top:32px" class="row"><a class="btn ghost" href="index.html" style="text-decoration:none">자세한 수치: 실험 대시보드 →</a><a class="btn ghost" href="https://github.com/MANGOCURLY/fly-hangul" style="text-decoration:none">코드 보기 →</a></p>
+    <p style="margin-top:32px" class="row"><a class="btn" href="fly3d.html" style="text-decoration:none">3D로 직접 해 보기 →</a><a class="btn ghost" href="index.html" style="text-decoration:none">자세한 수치: 실험 대시보드 →</a><a class="btn ghost" href="https://github.com/MANGOCURLY/fly-hangul" style="text-decoration:none">코드 보기 →</a></p>
   </div>
 </section>
 
@@ -557,6 +584,7 @@ Promise.all(["circuit", "stage_a", "stage_b", "stage_b_timing"].map(n => fetch(`
   drawReadout();
   if (A) chapterA(A);
   if (B) { chapterEcho(B); chapterBC(B, T); conclusion(A, B, T); }
+  fetch("data/followup.json").then(r => r.ok ? r.json() : null).catch(() => null).then(F => chapterMore(B, F));
 });
 
 /* 01 해부 그림 */
@@ -798,6 +826,79 @@ function chapterBC(B, T) {
       await sleep(360);
     }
   };
+}
+/* 09 추가 실험 */
+function miniLines(id, series, xs, xlab, chance, yMax = 1) {
+  const s = document.getElementById(id); s.innerHTML = "";
+  const X0 = 50, X1 = 440, Y0 = 210, Y1 = 30, xp = i => X0 + (X1 - X0) * i / (xs.length - 1), yp = v => Y0 - (Y0 - Y1) * v / yMax;
+  [0, .25, .5, .75, 1].filter(v => v <= yMax).forEach(v => { el("line", { x1: X0, x2: X1, y1: yp(v), y2: yp(v), style: "stroke:var(--line)" }, s); txt(s, X0 - 8, yp(v) + 4, `${v * 100}%`, "font:400 15px var(--f-data);fill:var(--muted)", "end"); });
+  xs.forEach((x, i) => txt(s, xp(i), Y0 + 24, x, "font:700 16px var(--f-data);fill:var(--ink)", "middle"));
+  txt(s, X0, 16, xlab, "font:700 16px var(--f-data);fill:var(--ink-strong)");
+  el("line", { x1: X0, x2: X1, y1: yp(chance), y2: yp(chance), style: "stroke:var(--muted);stroke-dasharray:2 5" }, s);
+  series.forEach(({ c, vals }) => {
+    const me = c === "connectome", mv = vals.map(mean);
+    el("path", { d: mv.map((v, i) => `${i ? "L" : "M"}${xp(i)},${yp(v)}`).join(""), style: `fill:none;stroke:${COND[c][1]};stroke-width:${me ? 3.5 : 2}` }, s);
+    vals.forEach((v, i) => {
+      el("line", { x1: xp(i), x2: xp(i), y1: yp(Math.min(...v)), y2: yp(Math.max(...v)), style: `stroke:${COND[c][1]};stroke-width:2` }, s);
+      const d = el("circle", { cx: xp(i), cy: yp(mean(v)), r: me ? 6 : 4.5, style: `fill:${COND[c][1]};stroke:var(--card);stroke-width:2` }, s);
+      hover(d, `<b>${COND[c][0]}</b> · ${xs[i]}<br>평균 ${pct(mean(v))} (${pct(Math.min(...v))}~${pct(Math.max(...v))})`);
+    });
+  });
+}
+function meanLead(F, steps) {
+  const out = [];
+  steps.forEach(s => ["B", "C"].forEach(t => {
+    const r = F.E3_steps[s][t], c = r.connectome;
+    if (mean(c) > mean(r.random) && mean(c) > mean(r.shuffle)) {
+      const wr = c.filter((v, i) => v > r.random[i]).length, ws = c.filter((v, i) => v > r.shuffle[i]).length;
+      out.push(`${s}스텝 ${t === "B" ? "받침/첫소리" : "받침 규칙"}: 평균 실제 ${pct(mean(c))} · 랜덤 ${pct(mean(r.random))} · 셔플 ${pct(mean(r.shuffle))} (seed별로 랜덤을 ${wr}/5번, 셔플을 ${ws}/5번 앞섬)`);
+    }
+  }));
+  return out.length ? `<br><br><b>기준에는 못 미쳤지만 평균으로는 앞선 곳:</b> ${out.join("; ")}.` : "";
+}
+function tradeoff(F, steps) {
+  const k3 = steps.map(s => `${s}스텝 ${pct(mean(F.E3_steps[s].B0["3"].connectome))}`).join(", ");
+  return `<br><br><b>대가:</b> 오래 넣을수록 지금 자모는 잘 도착하지만, 3개 전 자모 기억은 줄었습니다(${k3}). 느리고 긴 메아리를 빠른 도착과 맞바꾼 셈입니다.`;
+}
+function chapterMore(B, F) {
+  document.getElementById("plan-cap").innerHTML = `사전 등록: <a href="https://github.com/MANGOCURLY/fly-hangul/blob/main/docs/data/followup_plan.json">followup_plan.json</a> (2026-09-30 23:34 커밋) · 부호 적용 버전 · seed 5번`;
+  const pend = '<p class="fig-cap">실험이 끝나면 여기에 결과가 나옵니다.</p>';
+  if (!F || !Object.keys(F.E3_steps || {}).length) { document.getElementById("e3-note").innerHTML = pend; document.getElementById("e1-note").innerHTML = pend; return; }
+  const conds = ["connectome", "random", "shuffle", "input_only"], steps = Object.keys(F.E3_steps).sort((a, b) => a - b);
+  document.getElementById("e3-legend").innerHTML = conds.map(c => `<span class="pill"><i style="background:${COND[c][1]}"></i>${COND[c][0]}</span>`).join("");
+  const xs = steps.map(s => `${s}스텝`);
+  miniLines("e3-B", conds.map(c => ({ c, vals: steps.map(s => F.E3_steps[s].B[c]) })), xs, "받침/첫소리 판정 (찍기 33%)", 1 / 3);
+  miniLines("e3-C", conds.map(c => ({ c, vals: steps.map(s => F.E3_steps[s].C[c]) })), xs, "ㄸㅃㅉ 받침 규칙 (찍기 50%)", 1 / 2);
+  const wins = []; steps.forEach(s => ["B", "C"].forEach(t => { if (beats(F.E3_steps[s][t], "connectome", ["random", "shuffle"])) wins.push(`${s}스텝 ${t}`); }));
+  const bC = steps.map(s => pct(mean(F.E3_steps[s].B.connectome))).join(" → ");
+  const arrive = steps.map(s => `${s}스텝 ${pct(mean(F.E3_steps[s].B0["0"].connectome))}`).join(", ");
+  document.getElementById("e3-note").innerHTML =
+    `<b>${wins.length ? "성공기준 충족: " + wins.join(", ") + "에서 실제 초파리가 랜덤·셔플을 seed 5번 모두 앞섰습니다." : "성공기준 미충족: 어느 설정에서도 실제 초파리가 랜덤·셔플을 확실히 앞서지 못했습니다."}</b> ` +
+    `실제 초파리의 받침/첫소리 정답률: ${bC}. 지금 자모가 출력에 도착한 정도(지금 자모 맞히기): ${arrive}.` +
+    (wins.length ? " 설정 3개 × 과제 2개를 봤으므로, 한 번의 승리는 우연일 가능성도 있습니다." : "") + meanLead(F, steps) + tradeoff(F, steps);
+  const E1 = F.E1_data && F.E1_data["12000"];
+  if (!E1) { document.getElementById("e1-note").innerHTML = pend; return; }
+  const base = B.results.v2, s1 = document.getElementById("e1"); s1.innerHTML = "";
+  const X0 = 150, X1 = 420, yp = (i) => 40 + i * 44, xp = v => X0 + (X1 - X0) * v;
+  [0, .25, .5, .75, 1].forEach(v => { el("line", { x1: xp(v), x2: xp(v), y1: 20, y2: 225, style: "stroke:var(--line)" }, s1); txt(s1, xp(v), 244, `${v * 100}%`, "font:400 12px var(--f-data);fill:var(--muted)", "middle"); });
+  const shifts = {};
+  conds.forEach((c, i) => {
+    const a = mean(base.B[c]), b = mean(E1.B[c]); shifts[c] = b - a;
+    txt(s1, 0, yp(i) + 5, COND[c][0], `font:${c === "connectome" ? 700 : 400} 14px var(--f-body);fill:var(--ink)`);
+    el("line", { x1: xp(a), x2: xp(b), y1: yp(i), y2: yp(i), style: `stroke:${COND[c][1]};stroke-width:3` }, s1);
+    el("circle", { cx: xp(a), cy: yp(i), r: 5, style: `fill:var(--card);stroke:${COND[c][1]};stroke-width:2.5` }, s1);
+    const d = el("circle", { cx: xp(b), cy: yp(i), r: 6, style: `fill:${COND[c][1]};stroke:var(--card);stroke-width:2` }, s1);
+    hover(d, `<b>${COND[c][0]}</b><br>3,000개 ${pct(a)} → 12,000개 ${pct(b)}`);
+  });
+  const dB = shifts.connectome * 100, dC = (mean(E1.C.connectome) - mean(base.C.connectome)) * 100;
+  const sameRank = !beats(E1.B, "connectome", ["random", "shuffle"]) && !beats(E1.C, "connectome", ["random", "shuffle"]);
+  const held = Math.abs(dB) <= 3 && Math.abs(dC) <= 3 && sameRank;
+  document.getElementById("e1-note").innerHTML = `<b>${held ? "가설대로였습니다." : "가설과 달랐습니다."}</b> 실제 초파리의 변화: 받침/첫소리 ${dB >= 0 ? "+" : ""}${dB.toFixed(1)}%p, 받침 규칙 ${dC >= 0 ? "+" : ""}${dC.toFixed(1)}%p. ` +
+    (held ? "데이터를 4배로 늘려도 순위는 그대로입니다. 한계는 연습량이 아니라 출력에 담긴 정보입니다."
+      : `예측(±3%p 이내)보다 많이 올랐습니다. 제 예측이 틀린 부분입니다. ${sameRank ? "다만 랜덤·셔플 회로도 함께 올라서 <b>순위는 그대로</b>입니다." : "순위도 바뀌었습니다."}`);
+  const li = document.createElement("li");
+  li.innerHTML = `사전 등록한 추가 실험: 자모를 더 오래 넣으면 초파리의 성적이 올랐지만(${bC}), 랜덤 회로도 함께 올라 받침/첫소리 판정의 순위는 바뀌지 않았습니다. 데이터를 4배로 늘려도 순위는 그대로였습니다.`;
+  document.getElementById("says").insertBefore(li, document.getElementById("says").lastElementChild);
 }
 function mode(a) { const c = {}; a.forEach(x => c[x] = (c[x] || 0) + 1); return +Object.entries(c).sort((p, q) => q[1] - p[1])[0][0]; }
 
