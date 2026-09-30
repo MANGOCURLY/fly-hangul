@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>초파리 한글 실험</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=Poppins:wght@400;600&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #F7F2EC;
+  --card: #FFFFFF;
+  --ink-title: #3D0022;
+  --ink: #39343D;
+  --ink-muted: #6B6570;
+  --border: #DAD7DB;
+  --accent: #A25379;
+  --link-main: #A25379;
+  --link-other: #c9c4cc;
+  --node-fill: #F5ECE9;
+  --heat-0: #F5ECE9;
+  --heat-1: #A25379;
+  --heat-2: #3D0022;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #1c1719;
+    --card: #262023;
+    --ink-title: #f6e3ec;
+    --ink: #e2dade;
+    --ink-muted: #a89fa6;
+    --border: #3a3236;
+    --accent: #c46d97;
+    --link-main: #c46d97;
+    --link-other: #57505a;
+    --node-fill: #332a2e;
+    --heat-0: #2e2529;
+    --heat-1: #a8547d;
+    --heat-2: #f6c9dc;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1c1719; --card: #262023; --ink-title: #f6e3ec; --ink: #e2dade; --ink-muted: #a89fa6;
+  --border: #3a3236; --accent: #c46d97; --link-main: #c46d97; --link-other: #57505a;
+  --node-fill: #332a2e; --heat-0: #2e2529; --heat-1: #a8547d; --heat-2: #f6c9dc;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.6 system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+}
+main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+h1, h2 { font-family: "Libre Baskerville", "Malgun Gothic", serif; color: var(--ink-title); margin: 0; }
+h1 { font-size: 28px; line-height: 1.3; }
+h2 { font-size: 19px; margin-bottom: 4px; }
+.lede { color: var(--ink-muted); margin: 8px 0 28px; max-width: 70ch; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.sub { color: var(--ink-muted); font-size: 13px; margin: 0 0 12px; }
+.stats { display: flex; flex-wrap: wrap; gap: 24px; margin: 4px 0 16px; }
+.stat b { display: block; font: 600 22px/1.2 Poppins, system-ui, sans-serif; color: var(--ink-title); }
+.stat span { font-size: 12px; color: var(--ink-muted); }
+.controls { display: flex; gap: 16px; align-items: center; font-size: 13px; margin-bottom: 8px; flex-wrap: wrap; }
+.legend { display: flex; gap: 16px; font-size: 12px; color: var(--ink-muted); }
+.legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+svg { width: 100%; height: auto; display: block; }
+.node circle { fill: var(--node-fill); stroke: var(--accent); stroke-width: 2; }
+.node text { fill: var(--ink); font-size: 13px; text-anchor: middle; }
+.node .role { font: 600 14px Poppins, system-ui, sans-serif; fill: var(--ink-title); }
+.link { fill: none; stroke-linecap: round; transition: opacity .15s; }
+.link.main { stroke: var(--link-main); opacity: .85; }
+.link.other { stroke: var(--link-other); opacity: .9; }
+.hit { fill: none; stroke: transparent; cursor: pointer; }
+svg.dim .link { opacity: .12; }
+svg.dim .link.on { opacity: 1; }
+svg.mainonly .link.other, svg.mainonly .hit.other { display: none; }
+#tip {
+  position: fixed; pointer-events: none; background: var(--card); color: var(--ink);
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); opacity: 0; transition: opacity .1s; max-width: 260px; z-index: 9;
+}
+#tip b { color: var(--ink-title); }
+.tablewrap { overflow-x: auto; }
+table.heat { border-collapse: separate; border-spacing: 2px; font-size: 12px; font-variant-numeric: tabular-nums; }
+table.heat th { font-weight: 600; color: var(--ink-muted); padding: 4px 8px; text-align: center; white-space: nowrap; }
+table.heat td { width: 84px; height: 34px; text-align: center; border-radius: 4px; white-space: nowrap; }
+.placeholder { color: var(--ink-muted); font-size: 14px; }
+ol.log { margin: 0; padding-left: 20px; }
+ol.log li { margin-bottom: 8px; }
+.tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--border); margin-right: 6px; }
+.tag.done::before { content: "✓ "; }
+.tag.todo::before { content: "○ "; }
+footer { font-size: 12px; color: var(--ink-muted); }
+footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>초파리 한글 실험</h1>
+  <p class="lede">수컷 초파리 커넥톰(MaleCNS v1.0)의 후각–버섯체 회로에 한글 자모를 넣고, 출력 뉴런 활동만으로 자모와 글자 조합 규칙을 구분할 수 있는지 검증합니다. 회로 연결은 고정되어 있고, 학습하는 것은 회로 바깥에 붙인 선형 분류기입니다.</p>
+
+  <section class="card" id="p1">
+    <h2>① 회로 지도</h2>
+    <p class="sub">원 크기 = 뉴런 수 · 선 굵기 = 시냅스 수 · 원이나 선에 마우스를 올리면 수치가 보입니다</p>
+    <div class="stats" id="stats"></div>
+    <div class="controls">
+      <label><input type="checkbox" id="mainonly"> 주 경로만 보기</label>
+      <div class="legend"><span><i style="background:var(--link-main)"></i>주 경로 (입력 → 출력)</span><span><i style="background:var(--link-other)"></i>그 밖의 연결 (되먹임·국소 연결)</span></div>
+    </div>
+    <svg id="map" viewBox="0 0 1000 470" role="img" aria-label="후각-버섯체 회로 역할별 연결 지도"></svg>
+    <h2 style="margin-top:20px;font-size:16px">표 보기: 보내는 쪽 → 받는 쪽 시냅스 수</h2>
+    <p class="sub">행 = 보내는 뉴런, 열 = 받는 뉴런. 색이 진할수록 시냅스가 많습니다(로그 척도).</p>
+    <div class="tablewrap"><table class="heat" id="heat"></table></div>
+  </section>
+
+  <section class="card"><h2>② 자모 → 출력 반응</h2><p class="placeholder">단계 A 실행 후 표시됩니다.</p></section>
+  <section class="card"><h2>③ 성적표</h2><p class="placeholder">실제 초파리 / 랜덤 / 셔플 / 입력만 — 단계 A 실행 후 표시됩니다.</p></section>
+  <section class="card"><h2>④ ㅎㅏㄴㄱㅡㄹ 재생</h2><p class="placeholder">단계 B 실행 후 표시됩니다.</p></section>
+
+  <section class="card">
+    <h2>⑤ 진행 일지</h2>
+    <ol class="log" id="log"></ol>
+  </section>
+
+  <footer>
+    데이터: <a href="https://male-cns.janelia.org/">Janelia MaleCNS v1.0</a> (CC-BY 4.0). 신경전달물질은 예측값입니다.
+    이 페이지는 교육용 시각화이며 과학적 주장이 아닙니다.
+  </footer>
+</main>
+<div id="tip"></div>
+<script>
+const KO = { ORN: "후각 수용", ALLN: "촉각엽 국소", PN: "투사 뉴런", KC: "케년 세포", APL: "억제 조절", DPM: "조절", MBON: "버섯체 출력" };
+const POS = { ORN: [90, 170], PN: [340, 170], KC: [610, 170], MBON: [890, 170], ALLN: [215, 380], APL: [530, 380], DPM: [700, 380] };
+const NT_KO = { acetylcholine: "아세틸콜린", gaba: "GABA", glutamate: "글루탐산", dopamine: "도파민", octopamine: "옥토파민", unclear: "불명확" };
+const fmt = n => n.toLocaleString("ko-KR");
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; };
+const tip = document.getElementById("tip");
+function showTip(ev, html) { tip.innerHTML = html; tip.style.opacity = 1; tip.style.left = Math.min(ev.clientX + 14, innerWidth - 270) + "px"; tip.style.top = (ev.clientY + 14) + "px"; }
+function hideTip() { tip.style.opacity = 0; }
+
+fetch("data/circuit.json").then(r => r.json()).then(d => {
+  document.getElementById("stats").innerHTML =
+    [["뉴런", d.total_neurons], ["연결(뉴런 쌍)", d.total_connections], ["시냅스", d.total_synapses]]
+      .map(([k, v]) => `<div class="stat"><b>${fmt(v)}</b><span>${k}</span></div>`).join("");
+
+  const svg = document.getElementById("map");
+  const byRole = Object.fromEntries(d.nodes.map(n => [n.role, n]));
+  const maxN = Math.max(...d.nodes.map(n => n.neurons));
+  const R = r => 14 + 30 * Math.sqrt(byRole[r].neurons / maxN);
+  const maxS = Math.max(...d.links.map(l => l.synapses));
+  const W = s => 1.5 + 11 * Math.sqrt(s / maxS);
+
+  const defs = el("defs", {}, svg);
+  for (const [id, v] of [["am", "--link-main"], ["ao", "--link-other"]]) {
+    const m = el("marker", { id, viewBox: "0 0 10 10", refX: 7, refY: 5, markerWidth: 11, markerHeight: 11, orient: "auto-start-reverse", markerUnits: "userSpaceOnUse" }, defs);
+    el("path", { d: "M0,1 L9,5 L0,9 z", style: `fill:var(${v})` }, m);
+  }
+  const gl = el("g", {}, svg), gh = el("g", {}, svg), gn = el("g", {}, svg);
+  const links = [...d.links].sort((a, b) => b.synapses - a.synapses);
+
+  function pathFor(l) {
+    const [x1, y1] = POS[l.pre], [x2, y2] = POS[l.post];
+    if (l.pre === l.post) {
+      const r = R(l.pre), up = -1;
+      const sy = y1 + up * r * 0.7;
+      if (y1 > 300) return `M${x1 - r * 0.7},${y1 - r * 0.7} C${x1 - r - 60},${y1 - r - 15} ${x1 - r - 60},${y1 + r + 15} ${x1 - r * 0.7},${y1 + r * 0.7}`;
+      return `M${x1 - r * 0.7},${sy} C${x1 - r * 1.6},${y1 + up * (r + 55)} ${x1 + r * 1.6},${y1 + up * (r + 55)} ${x1 + r * 0.7},${sy}`;
+    }
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
+    const nx = -dy / len, ny = dx / len, bend = 0.18 * len;
+    const cx = (x1 + x2) / 2 + nx * bend, cy = (y1 + y2) / 2 + ny * bend;
+    const trim = (x, y, tx, ty, r) => { const L = Math.hypot(tx - x, ty - y); return [x + (tx - x) / L * r, y + (ty - y) / L * r]; };
+    const [sx, sy] = trim(x1, y1, cx, cy, R(l.pre) + 2);
+    const [ex, ey] = trim(x2, y2, cx, cy, R(l.post) + 8);
+    return `M${sx},${sy} Q${cx},${cy} ${ex},${ey}`;
+  }
+
+  const linkEls = [];
+  for (const l of links) {
+    const cls = l.main ? "main" : "other";
+    const p = pathFor(l);
+    const le = el("path", { d: p, class: `link ${cls}`, "stroke-width": W(l.synapses), "marker-end": `url(#${l.main ? "am" : "ao"})` }, gl);
+    const he = el("path", { d: p, class: `hit ${cls}`, "stroke-width": Math.max(14, W(l.synapses) + 8) }, gh);
+    le.dataset.pre = l.pre; le.dataset.post = l.post;
+    linkEls.push(le);
+    he.addEventListener("mousemove", ev => {
+      svg.classList.add("dim"); le.classList.add("on");
+      showTip(ev, `<b>${l.pre} → ${l.post}</b><br>${KO[l.pre]} → ${KO[l.post]}<br>뉴런 쌍 ${fmt(l.connections)}개<br>시냅스 ${fmt(l.synapses)}개`);
+    });
+    he.addEventListener("mouseleave", () => { svg.classList.remove("dim"); le.classList.remove("on"); hideTip(); });
+  }
+
+  for (const n of d.nodes) {
+    const [x, y] = POS[n.role], r = R(n.role);
+    const g = el("g", { class: "node", tabindex: 0 }, gn);
+    el("circle", { cx: x, cy: y, r }, g);
+    const below = y + r + 18;
+    el("text", { x, y: below, class: "role" }, g).textContent = n.role;
+    el("text", { x, y: below + 17 }, g).textContent = `${KO[n.role]} · ${fmt(n.neurons)}`;
+    const nt = Object.entries(n.nt).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${NT_KO[k] || k} ${fmt(v)}`).join(", ");
+    const on = ev => {
+      svg.classList.add("dim");
+      linkEls.forEach(le => { if (le.dataset.pre === n.role || le.dataset.post === n.role) le.classList.add("on"); });
+      showTip(ev, `<b>${n.role}</b> ${KO[n.role]}<br>뉴런 ${fmt(n.neurons)}개 · 타입 ${fmt(n.types)}종<br>신경전달물질(예측): ${nt}`);
+    };
+    g.addEventListener("mousemove", on);
+    g.addEventListener("mouseleave", () => { svg.classList.remove("dim"); linkEls.forEach(le => le.classList.remove("on")); hideTip(); });
+  }
+
+  document.getElementById("mainonly").addEventListener("change", e => svg.classList.toggle("mainonly", e.target.checked));
+
+  // 표 보기
+  const order = d.nodes.map(n => n.role);
+  const m = {}; d.links.forEach(l => m[l.pre + ">" + l.post] = l.synapses);
+  const lmax = Math.log10(maxS);
+  const cs = getComputedStyle(document.documentElement);
+  const hex = v => cs.getPropertyValue(v).trim();
+  const mix = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",")})`; };
+  const ramp = t => t < .5 ? mix(hex("--heat-0"), hex("--heat-1"), t * 2) : mix(hex("--heat-1"), hex("--heat-2"), (t - .5) * 2);
+  const inkFor = rgb => { const [r, g, b] = rgb.match(/\d+/g).map(Number); return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? "#2a2226" : "#ffffff"; };
+  let html = `<tr><th>보냄 → 받음</th>${order.map(r => `<th>${r}</th>`).join("")}</tr>`;
+  for (const a of order) {
+    html += `<tr><th>${a}</th>`;
+    for (const b of order) {
+      const s = m[a + ">" + b];
+      if (!s) { html += `<td style="color:var(--ink-muted)">–</td>`; continue; }
+      const t = Math.log10(s) / lmax;
+      const bg = ramp(t);
+      html += `<td title="${a} → ${b}: 시냅스 ${fmt(s)}" style="background:${bg};color:${inkFor(bg)}">${fmt(s)}</td>`;
+    }
+    html += "</tr>";
+  }
+  document.getElementById("heat").innerHTML = html;
+});
+
+fetch("data/progress.json").then(r => r.json()).then(items => {
+  document.getElementById("log").innerHTML = items.map(i =>
+    `<li><span class="tag ${i.done ? "done" : "todo"}">${i.done ? "완료" : "예정"}</span><b>${i.title}</b>${i.date ? ` <span style="color:var(--ink-muted);font-size:12px">${i.date}</span>` : ""}<br><span style="font-size:13px">${i.note}</span></li>`).join("");
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,312 @@
+{
+ "source": "Janelia MaleCNS v1.0 (CC-BY 4.0), connectome-weights minconf 0.5, status=Traced",
+ "total_neurons": 7910,
+ "total_connections": 1195452,
+ "total_synapses": 5831790,
+ "nodes": [
+  {
+   "role": "ORN",
+   "neurons": 2639,
+   "types": 53,
+   "nt": {
+    "acetylcholine": 2639
+   }
+  },
+  {
+   "role": "ALLN",
+   "neurons": 420,
+   "types": 79,
+   "nt": {
+    "acetylcholine": 137,
+    "gaba": 115,
+    "glutamate": 99,
+    "unclear": 67,
+    "octopamine": 2
+   }
+  },
+  {
+   "role": "PN",
+   "neurons": 686,
+   "types": 180,
+   "nt": {
+    "acetylcholine": 469,
+    "gaba": 209,
+    "glutamate": 8
+   }
+  },
+  {
+   "role": "KC",
+   "neurons": 4064,
+   "types": 15,
+   "nt": {
+    "acetylcholine": 4064
+   }
+  },
+  {
+   "role": "APL",
+   "neurons": 2,
+   "types": 1,
+   "nt": {
+    "gaba": 2
+   }
+  },
+  {
+   "role": "DPM",
+   "neurons": 2,
+   "types": 1,
+   "nt": {
+    "dopamine": 2
+   }
+  },
+  {
+   "role": "MBON",
+   "neurons": 97,
+   "types": 37,
+   "nt": {
+    "acetylcholine": 50,
+    "glutamate": 26,
+    "gaba": 21
+   }
+  }
+ ],
+ "links": [
+  {
+   "pre": "ALLN",
+   "post": "ALLN",
+   "connections": 36859,
+   "synapses": 647941,
+   "main": false
+  },
+  {
+   "pre": "ALLN",
+   "post": "MBON",
+   "connections": 9,
+   "synapses": 52,
+   "main": false
+  },
+  {
+   "pre": "ALLN",
+   "post": "ORN",
+   "connections": 73055,
+   "synapses": 232496,
+   "main": false
+  },
+  {
+   "pre": "ALLN",
+   "post": "PN",
+   "connections": 45746,
+   "synapses": 455969,
+   "main": false
+  },
+  {
+   "pre": "APL",
+   "post": "APL",
+   "connections": 3,
+   "synapses": 22,
+   "main": false
+  },
+  {
+   "pre": "APL",
+   "post": "DPM",
+   "connections": 4,
+   "synapses": 1595,
+   "main": false
+  },
+  {
+   "pre": "APL",
+   "post": "KC",
+   "connections": 4633,
+   "synapses": 196200,
+   "main": false
+  },
+  {
+   "pre": "APL",
+   "post": "MBON",
+   "connections": 120,
+   "synapses": 4466,
+   "main": false
+  },
+  {
+   "pre": "APL",
+   "post": "PN",
+   "connections": 268,
+   "synapses": 4600,
+   "main": false
+  },
+  {
+   "pre": "DPM",
+   "post": "APL",
+   "connections": 4,
+   "synapses": 3521,
+   "main": false
+  },
+  {
+   "pre": "DPM",
+   "post": "DPM",
+   "connections": 3,
+   "synapses": 4,
+   "main": false
+  },
+  {
+   "pre": "DPM",
+   "post": "KC",
+   "connections": 4082,
+   "synapses": 32795,
+   "main": false
+  },
+  {
+   "pre": "DPM",
+   "post": "MBON",
+   "connections": 112,
+   "synapses": 6561,
+   "main": false
+  },
+  {
+   "pre": "KC",
+   "post": "APL",
+   "connections": 4693,
+   "synapses": 210352,
+   "main": false
+  },
+  {
+   "pre": "KC",
+   "post": "DPM",
+   "connections": 4237,
+   "synapses": 95527,
+   "main": false
+  },
+  {
+   "pre": "KC",
+   "post": "KC",
+   "connections": 642933,
+   "synapses": 1153845,
+   "main": false
+  },
+  {
+   "pre": "KC",
+   "post": "MBON",
+   "connections": 61210,
+   "synapses": 463640,
+   "main": true
+  },
+  {
+   "pre": "KC",
+   "post": "PN",
+   "connections": 5154,
+   "synapses": 6154,
+   "main": false
+  },
+  {
+   "pre": "MBON",
+   "post": "ALLN",
+   "connections": 13,
+   "synapses": 196,
+   "main": false
+  },
+  {
+   "pre": "MBON",
+   "post": "APL",
+   "connections": 79,
+   "synapses": 2383,
+   "main": false
+  },
+  {
+   "pre": "MBON",
+   "post": "DPM",
+   "connections": 60,
+   "synapses": 370,
+   "main": false
+  },
+  {
+   "pre": "MBON",
+   "post": "KC",
+   "connections": 6813,
+   "synapses": 11181,
+   "main": false
+  },
+  {
+   "pre": "MBON",
+   "post": "MBON",
+   "connections": 1606,
+   "synapses": 26259,
+   "main": false
+  },
+  {
+   "pre": "MBON",
+   "post": "PN",
+   "connections": 214,
+   "synapses": 1078,
+   "main": false
+  },
+  {
+   "pre": "ORN",
+   "post": "ALLN",
+   "connections": 118703,
+   "synapses": 633253,
+   "main": false
+  },
+  {
+   "pre": "ORN",
+   "post": "ORN",
+   "connections": 70494,
+   "synapses": 184577,
+   "main": false
+  },
+  {
+   "pre": "ORN",
+   "post": "PN",
+   "connections": 33821,
+   "synapses": 502874,
+   "main": true
+  },
+  {
+   "pre": "PN",
+   "post": "ALLN",
+   "connections": 29042,
+   "synapses": 406489,
+   "main": false
+  },
+  {
+   "pre": "PN",
+   "post": "APL",
+   "connections": 290,
+   "synapses": 5416,
+   "main": false
+  },
+  {
+   "pre": "PN",
+   "post": "DPM",
+   "connections": 2,
+   "synapses": 3,
+   "main": false
+  },
+  {
+   "pre": "PN",
+   "post": "KC",
+   "connections": 22586,
+   "synapses": 390928,
+   "main": true
+  },
+  {
+   "pre": "PN",
+   "post": "MBON",
+   "connections": 327,
+   "synapses": 1614,
+   "main": false
+  },
+  {
+   "pre": "PN",
+   "post": "ORN",
+   "connections": 4725,
+   "synapses": 9144,
+   "main": false
+  },
+  {
+   "pre": "PN",
+   "post": "PN",
+   "connections": 23552,
+   "synapses": 140285,
+   "main": false
+  }
+ ]
+}

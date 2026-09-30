@@ -1,0 +1,6 @@
+# 원본 커넥톰(수 GB)과 중간 산출물은 올리지 않는다. 받는 곳: https://male-cns.janelia.org/download/
+*.feather
+/data/
+.venv/
+.claude/
+__pycache__/
